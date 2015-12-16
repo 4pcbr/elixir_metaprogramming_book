@@ -32,25 +32,25 @@ defmodule ControlFlowTest do
   use ControlFlow
 
   test "unless with no else" do
-    "asd" == unless( false ) do
+    assert("asd" == unless( false ) do
       "asd"
-    end
+    end)
   end
 
   test "unless with else" do
-    "asd" == unless ( false ) do
+    assert("asd" == unless ( false ) do
       "asd"
     else
       "qwe"
-    end
+    end)
   end
 
   test "Else block returns value" do
-    "asd" == unless ( true ) do
+    assert("asd" == unless ( true ) do
       "qwe"
     else
       "asd"
-    end
+    end)
   end
 
 
