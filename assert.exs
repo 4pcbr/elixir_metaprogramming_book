@@ -37,7 +37,29 @@ defmodule Assertion do
 
   defmacro __before_compile__( _env ) do
     quote do
-      def run, do: Assertion.Test.run( @tests, __MODULE__ )
+      def run do
+        { time, res } = :timer.tc(
+          Assertion.Test, :run, [ @tests, __MODULE__ ]
+        )
+
+        res = res
+          |> Enum.reduce(
+            %{ fail: 0, ok: 0, errors: [] }, fn(test_res, acc) ->
+              case test_res do
+                { :ok } ->
+                  { _, acc } = Map.get_and_update( acc, :ok, fn cnt -> { cnt, cnt + 1 } end )
+                { :fail, reason } ->
+                  { _, acc } = Map.get_and_update( acc, :fail, fn cnt -> { cnt, cnt + 1 } end )
+                  { _, acc } = Map.get_and_update( acc, :errors, fn errors -> { errors, [ reason | errors ] } end )
+                default ->
+                  IO.puts "Unknown result: #{inspect default}"
+              end
+              acc
+            end)
+        :io.format "run time(ms): ~.2f~n", [ time / 1000.0 ]
+        :io.format "ok:     ~B~nfail:   ~B~n", [ Map.get( res, :ok ), Map.get( res, :fail ) ]
+        IO.puts Enum.join( Map.get( res, :errors ), "\n" )
+      end
     end
   end
 
@@ -71,7 +93,6 @@ defmodule Assertion.Test do
     send master, { :ready, self }
     receive do
       { :test, module, test_func, description } ->
-        IO.puts "Received a test case"
         send master, do_run_test( module, test_func, description )
         do_run_test_worker( master )
       { :terminate } -> exit( :normal )
@@ -88,14 +109,11 @@ defmodule Assertion.Test do
         spawn_link( __MODULE__, :do_run_test_worker, [ self ] )
       end )
       |> do_test( tests, module, [] )
-      |> Enum.join("")
-      |> IO.puts
   end
 
   def do_test( workers, tests, module, results ) do
     receive do
       { :ready, pid } when length(tests) > 0 ->
-        IO.puts "pid #{inspect pid} is ready"
         [ { test_func, description } | tail ] = tests
         send pid, { :test, module, test_func, description }
         do_test( workers, tail, module, results )
@@ -108,10 +126,10 @@ defmodule Assertion.Test do
           results
         end
       :ok ->
-        results = [ "." | results ]
+        results = [ { :ok } | results ]
         do_test( workers, tests, module, results )
       { :fail, reason } ->
-        results = [ reason | results ]
+        results = [ { :fail, reason } | results ]
         do_test( workers, tests, module, results )
       msg ->
         IO.puts "unknown response from worker: #{inspect msg}"
