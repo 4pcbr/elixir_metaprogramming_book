@@ -53,23 +53,70 @@ end
 
 defmodule Assertion.Test do
 
-  def run( tests, module ) do
-    Enum.each tests, fn { test_func, description } ->
-      case apply( module, test_func, [] ) do
-        :ok               -> IO.write "."
-        { :fail, reason } -> IO.puts """
-        
-        
-        ===============================================
-                FAILURE: #{description}
-        ===============================================
-                #{reason}
-                """
-      end
+  def do_run_test( module, test_func, description ) do
+    case apply( module, test_func, [] ) do
+      :ok               -> :ok
+      { :fail, reason } -> { :fail, """
+      
+      
+      ===============================================
+              FAILURE: #{description}
+      ===============================================
+              #{reason}
+              """ }
     end
-
   end
 
+  def do_run_test_worker( master ) do
+    send master, { :ready, self }
+    receive do
+      { :test, module, test_func, description } ->
+        IO.puts "Received a test case"
+        send master, do_run_test( module, test_func, description )
+        do_run_test_worker( master )
+      { :terminate } -> exit( :normal )
+    end
+  end
+
+  def run( tests, module ) do
+    run( tests, module, length( tests ) )
+  end
+
+  def run( tests, module, num_workers ) do
+    1..num_workers
+      |> Enum.map( fn _ ->
+        spawn_link( __MODULE__, :do_run_test_worker, [ self ] )
+      end )
+      |> do_test( tests, module, [] )
+      |> Enum.join("")
+      |> IO.puts
+  end
+
+  def do_test( workers, tests, module, results ) do
+    receive do
+      { :ready, pid } when length(tests) > 0 ->
+        IO.puts "pid #{inspect pid} is ready"
+        [ { test_func, description } | tail ] = tests
+        send pid, { :test, module, test_func, description }
+        do_test( workers, tail, module, results )
+      { :ready, pid } ->
+        send pid, { :terminate }
+        if length( workers ) > 1 do
+          do_test( List.delete( workers, pid ), tests, module, results )
+        else
+          IO.puts "Done testing"
+          results
+        end
+      :ok ->
+        results = [ "." | results ]
+        do_test( workers, tests, module, results )
+      { :fail, reason } ->
+        results = [ reason | results ]
+        do_test( workers, tests, module, results )
+      msg ->
+        IO.puts "unknown response from worker: #{inspect msg}"
+    end
+  end
 
   def assert( :==, lhs, rhs ) when lhs == rhs do
     :ok
@@ -144,7 +191,7 @@ defmodule MathTest do
 
   test "integers can be multiplied and divided" do
     assert 5 * 5 == 25
-    assert 10 / 2 == 5
+    assert 10 / 2 != 5
   end
 
   test "test bool" do
