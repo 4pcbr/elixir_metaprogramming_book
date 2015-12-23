@@ -72,6 +72,9 @@ defmodule I18n do
     ],
     users: [
       title: "Users",
+    ],
+    title: [
+      user: "user",
     ]
 
   locale "fr",
@@ -81,7 +84,28 @@ defmodule I18n do
     ],
     users: [
       title: "Utilisateurs",
+    ],
+    title: [
+      user: "utilisateurs",
     ]
 
 end
 
+ExUnit.start()
+
+defmodule I18nTest do
+  use ExUnit.Case
+  import I18n
+
+  test "Notmal translations" do
+    assert I18n.t( "en", "title.user" ) == "user"
+  end
+
+
+  test "Pluralizarion: 1 item" do
+    assert I18n.t( "en", "title.user", count: 1 ) == "user"
+    assert I18n.t( "en", "title.user", count: 2 ) == "users"
+  end
+
+end
+ExUnit.run()
