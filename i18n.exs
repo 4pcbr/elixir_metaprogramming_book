@@ -104,7 +104,12 @@ defmodule I18nTest do
 
   test "Pluralizarion: 1 item" do
     assert I18n.t( "en", "title.user", count: 1 ) == "user"
+    assert I18n.t( "fr", "title.user", count: 1 ) == "utilisateur"
+  end
+
+  test "Pluralizarion: 2 items" do
     assert I18n.t( "en", "title.user", count: 2 ) == "users"
+    assert I18n.t( "fr", "title.user", count: 2 ) == "utilisateurs"
   end
 
 end
