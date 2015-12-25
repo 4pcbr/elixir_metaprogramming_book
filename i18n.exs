@@ -1,15 +1,11 @@
 defmodule Plural do
-
-  def pluralize( item, locale ), do: pluralize( item, locale, 1 )
-  def pluralize( item, _locale, _count ) when is_binary( item ), do: item
-  def pluralize( item, locale, count ) when is_list( item ) do
+  def get_plural_form( locale, count ) do
     module = Module.concat( __MODULE__, String.upcase( locale ) )
-    key = case :code.is_loaded( module ) do
+    case :code.is_loaded( module ) do
       false -> raise "The locale #{locale} is not supported"
-      true -> module.get_plural_form(count)
+      { :file, _ } -> module.get_plural_form(count)
     end
   end
-
 end
 
 defmodule Plural.EN do
@@ -25,16 +21,13 @@ end
 
 defmodule Plural.RU do
   def get_plural_form( count ) when is_integer( count ) and rem( count, 10 ) == 1 and rem( count, 100 ) != 11, do: :one
-  def get_plural_form( count ) when is_integer( count ) and rem( count, 10 ) == 2 and not( rem( count, 100 ) in 12..14 ), do: :few
+  def get_plural_form( count ) when is_integer( count ) and ( rem( count, 10 ) in 2..4 ) and not( rem( count, 100 ) in 12..14 ), do: :few
   def get_plural_form( count ) when is_integer( count ) and ( ( rem( count, 10 ) in [ 0, 5, 6, 7, 8, 9 ] ) or ( rem( count, 100 ) in 11..14 ) ), do: :many
   def get_plural_form( _count ), do: :other
 end
 
-
-
-
-
 defmodule Translator do
+
   defmacro __using__( _options ) do
     quote do
       Module.register_attribute __MODULE__, :locales, accumulate: true,
@@ -59,8 +52,17 @@ defmodule Translator do
       deftranslations( locale, "", mappings )
     end
     quote do
+      def t( locale, path ) do
+        case t( locale, path, 1) do
+          { :error, _ } -> { :error, :no_translation }
+          res -> res
+        end
+      end
       def t( locale, path, bindings \\ [] )
       unquote( translations_ast )
+      def t( locale, path, count ) when is_number( count ) do
+        t( locale, "#{path}.#{Plural.get_plural_form( locale, count )}" )
+      end
       def t( _locale, _path, _bindings ), do: { :error, :no_translation }
     end
   end
@@ -155,23 +157,75 @@ end
 
 ExUnit.start()
 
+defmodule Plural.ENTest do
+  use ExUnit.Case
+  import Plural.EN, only: [ get_plural_form: 1 ]
+
+  test ":one" do
+    assert get_plural_form( 1 ) == :one
+  end
+
+  test ":other" do
+    [ 0, 2, 0.5, 1.2, 3, 4, 5.5, 100, 111, 112 ]
+      |> Enum.each( fn( count )->
+        assert get_plural_form( count ) == :other
+      end)
+  end
+
+end
+
+defmodule Plural.RUTest do
+  use ExUnit.Case
+  import Plural.RU, only: [ get_plural_form: 1 ]
+
+  test "one" do
+    [ 1, 21, 31, 41, 51, 101, 121 ]
+      |> Enum.each( fn( count ) ->
+        assert get_plural_form( count ) == :one
+      end )
+  end
+
+  test "few" do
+    [ 2, 3, 4, 22, 23, 24, 33, 34, 102, 103, 104, 122, 123, 124 ]
+      |> Enum.each( fn( count ) ->
+        assert get_plural_form( count ) == :few
+      end )
+  end
+
+  test "many" do
+    [ 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 25, 35, 105, 110 ]
+      |> Enum.each( fn( count ) ->
+        assert get_plural_form( count ) == :many
+      end )
+  end
+
+  test "other" do
+    [ 0.1, 1.1, 10.5, 10.0, 100.1 ]
+      |> Enum.each( fn( count ) ->
+        assert get_plural_form( count ) == :other
+      end )
+  end
+
+end
+
+
 defmodule I18nTest do
   use ExUnit.Case
-  import I18n
+  import I18n, only: [ t: 2, t: 3 ]
 
   test "Notmal translations" do
-    assert I18n.t( "en", "title.user" ) == "user"
+    assert t( "en", "title.user" ) == "user"
   end
 
 
   test "Pluralizarion: 1 item" do
-    assert I18n.t( "en", "title.user", count: 1 ) == "user"
-    assert I18n.t( "fr", "title.user", count: 1 ) == "utilisateur"
+    assert t( "en", "title.user", 1 ) == "user"
+    assert t( "fr", "title.user", 1 ) == "utilisateur"
   end
 
   test "Pluralizarion: 2 items" do
-    assert I18n.t( "en", "title.user", count: 2 ) == "users"
-    assert I18n.t( "fr", "title.user", count: 2 ) == "utilisateurs"
+    assert t( "en", "title.user", 2 ) == "users"
+    assert t( "fr", "title.user", 2 ) == "utilisateurs"
   end
 
 end
