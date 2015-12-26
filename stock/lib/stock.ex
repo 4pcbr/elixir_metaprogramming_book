@@ -1,0 +1,2 @@
+defmodule Stock do
+end
