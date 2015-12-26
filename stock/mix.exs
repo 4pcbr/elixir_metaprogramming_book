@@ -28,6 +28,7 @@ defmodule Stock.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
+      { :ibrowse, github: "cmullaparthi/ibrowse", tag: "v4.2.2" },
       { :poison, "~> 1.3.0" },
       { :httpotion, "~> 1.0.0" },
     ]
