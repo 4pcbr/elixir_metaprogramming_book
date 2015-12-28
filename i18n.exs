@@ -52,12 +52,6 @@ defmodule Translator do
       deftranslations( locale, "", mappings )
     end
     quote do
-      def t( locale, path ) do
-        case t( locale, path, 1) do
-          { :error, _ } -> { :error, :no_translation }
-          res -> res
-        end
-      end
       def t( locale, path, bindings \\ [] )
       unquote( translations_ast )
       def t( locale, path, count ) when is_number( count ) do
@@ -155,78 +149,78 @@ defmodule I18n do
 
 end
 
-ExUnit.start()
-
-defmodule Plural.ENTest do
-  use ExUnit.Case
-  import Plural.EN, only: [ get_plural_form: 1 ]
-
-  test ":one" do
-    assert get_plural_form( 1 ) == :one
-  end
-
-  test ":other" do
-    [ 0, 2, 0.5, 1.2, 3, 4, 5.5, 100, 111, 112 ]
-      |> Enum.each( fn( count )->
-        assert get_plural_form( count ) == :other
-      end)
-  end
-
-end
-
-defmodule Plural.RUTest do
-  use ExUnit.Case
-  import Plural.RU, only: [ get_plural_form: 1 ]
-
-  test "one" do
-    [ 1, 21, 31, 41, 51, 101, 121 ]
-      |> Enum.each( fn( count ) ->
-        assert get_plural_form( count ) == :one
-      end )
-  end
-
-  test "few" do
-    [ 2, 3, 4, 22, 23, 24, 33, 34, 102, 103, 104, 122, 123, 124 ]
-      |> Enum.each( fn( count ) ->
-        assert get_plural_form( count ) == :few
-      end )
-  end
-
-  test "many" do
-    [ 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 25, 35, 105, 110 ]
-      |> Enum.each( fn( count ) ->
-        assert get_plural_form( count ) == :many
-      end )
-  end
-
-  test "other" do
-    [ 0.1, 1.1, 10.5, 10.0, 100.1 ]
-      |> Enum.each( fn( count ) ->
-        assert get_plural_form( count ) == :other
-      end )
-  end
-
-end
-
-
-defmodule I18nTest do
-  use ExUnit.Case
-  import I18n, only: [ t: 2, t: 3 ]
-
-  test "Notmal translations" do
-    assert t( "en", "title.user" ) == "user"
-  end
-
-
-  test "Pluralizarion: 1 item" do
-    assert t( "en", "title.user", 1 ) == "user"
-    assert t( "fr", "title.user", 1 ) == "utilisateur"
-  end
-
-  test "Pluralizarion: 2 items" do
-    assert t( "en", "title.user", 2 ) == "users"
-    assert t( "fr", "title.user", 2 ) == "utilisateurs"
-  end
-
-end
-ExUnit.run()
+# ExUnit.start()
+# 
+# defmodule Plural.ENTest do
+#   use ExUnit.Case
+#   import Plural.EN, only: [ get_plural_form: 1 ]
+# 
+#   test ":one" do
+#     assert get_plural_form( 1 ) == :one
+#   end
+# 
+#   test ":other" do
+#     [ 0, 2, 0.5, 1.2, 3, 4, 5.5, 100, 111, 112 ]
+#       |> Enum.each( fn( count )->
+#         assert get_plural_form( count ) == :other
+#       end)
+#   end
+# 
+# end
+# 
+# defmodule Plural.RUTest do
+#   use ExUnit.Case
+#   import Plural.RU, only: [ get_plural_form: 1 ]
+# 
+#   test "one" do
+#     [ 1, 21, 31, 41, 51, 101, 121 ]
+#       |> Enum.each( fn( count ) ->
+#         assert get_plural_form( count ) == :one
+#       end )
+#   end
+# 
+#   test "few" do
+#     [ 2, 3, 4, 22, 23, 24, 33, 34, 102, 103, 104, 122, 123, 124 ]
+#       |> Enum.each( fn( count ) ->
+#         assert get_plural_form( count ) == :few
+#       end )
+#   end
+# 
+#   test "many" do
+#     [ 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 25, 35, 105, 110 ]
+#       |> Enum.each( fn( count ) ->
+#         assert get_plural_form( count ) == :many
+#       end )
+#   end
+# 
+#   test "other" do
+#     [ 0.1, 1.1, 10.5, 10.0, 100.1 ]
+#       |> Enum.each( fn( count ) ->
+#         assert get_plural_form( count ) == :other
+#       end )
+#   end
+# 
+# end
+# 
+# 
+# defmodule I18nTest do
+#   use ExUnit.Case
+#   import I18n, only: [ t: 2, t: 3 ]
+# 
+#   test "Notmal translations" do
+#     assert t( "en", "title.user" ) == "user"
+#   end
+# 
+# 
+#   test "Pluralizarion: 1 item" do
+#     assert t( "en", "title.user", 1 ) == "user"
+#     assert t( "fr", "title.user", 1 ) == "utilisateur"
+#   end
+# 
+#   test "Pluralizarion: 2 items" do
+#     assert t( "en", "title.user", 2 ) == "users"
+#     assert t( "fr", "title.user", 2 ) == "utilisateurs"
+#   end
+# 
+# end
+# ExUnit.run()
