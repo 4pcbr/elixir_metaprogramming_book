@@ -19,8 +19,6 @@ defmodule Mime do
     end
   end
 
-  
-
 end
 
 defmodule MimeMapper do
