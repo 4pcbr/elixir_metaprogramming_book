@@ -27,6 +27,17 @@ defmodule Html do
     end
   end
 
+  def postwalk({ :text, _meta, [ string ] }) do
+    quote do: put_buffer( var!( buffer, Html ), to_string( unquote( string ) ) )
+  end
+  def postwalk({ tag_name, _meta, [[ do: inner ]] }) when tag_name in @tags do
+    quote do: tag( unquote( tag_name ), [], do: unquote( inner ) )
+  end
+  def postwalk({ tag_name, _meta, [ attrs, [ do: inner ] ] }) when tag_name in @tags do
+    quote do: tag( unquote( tag_name ), unquote( attrs ), do: unquote( inner ) )
+  end
+  def postwalk( ast ), do: ast
+
   def start_buffer( state ), do: Agent.start_link( fn -> state end )
 
   def stop_buffer( buff ), do: Agent.stop( buff )
