@@ -5,6 +5,9 @@ defmodule Html do
     line |> String.strip |> String.to_atom
   end)
 
+  @tab_indent    "  "
+  @tab_indent_on true
+
   for tag <- @tags do
     defmacro unquote( tag )( attrs, do: inner ) do
       tag = unquote( tag )
@@ -44,7 +47,12 @@ defmodule Html do
 
   def put_buffer( buff, content ), do: Agent.update( buff, &[ content | &1 ])
 
-  def render( buff ), do: Agent.get( buff, &(&1) ) |> Enum.reverse |> Enum.join("")
+  def _inspect( el ) do
+    IO.inspect el
+    el
+  end
+
+  def render( buff ), do: Agent.get( buff, &(&1) ) |> _inspect |> Enum.reverse |> Enum.join("")
 
   defmacro tag( name, attrs \\ [] ) do
     { inner, attrs } = Dict.pop( attrs, :do )
