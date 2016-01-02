@@ -52,6 +52,21 @@ defmodule Html do
     el
   end
 
+  def indent( [ el | buffer ], offset \\ 0 ) do
+    if @tab_indent_on do
+      [ el | buffer ]
+    else
+      case Regex.run( ~r/<\/?/, el ) |> List.first do
+        "</" -> # close tag
+        "<"  -> # open tag
+        _    -> # text
+      end
+
+      indentation = List.duplicate( @tab_indent, offset ) |> String.join
+    end
+  end
+
+
   def render( buff ), do: Agent.get( buff, &(&1) ) |> _inspect |> Enum.reverse |> Enum.join("")
 
   defmacro tag( name, attrs \\ [] ) do
