@@ -52,17 +52,18 @@ defmodule Html do
     el
   end
 
-  def indent( [ el | buffer ], offset \\ 0 ) do
+  def indent( [ el | tail ], acc, offset \\ 0 ) do
     if @tab_indent_on do
       [ el | buffer ]
     else
+      indentation = List.duplicate( @tab_indent, offset ) |> String.join
       case Regex.run( ~r/<\/?/, el ) |> List.first do
-        "</" -> # close tag
-        "<"  -> # open tag
+        "</" ->
+          el <> "\n" <> indent( tail, offset - 1 )
+        "<"  ->
+          
         _    -> # text
       end
-
-      indentation = List.duplicate( @tab_indent, offset ) |> String.join
     end
   end
 
