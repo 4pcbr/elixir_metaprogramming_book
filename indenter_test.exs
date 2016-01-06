@@ -1,5 +1,7 @@
 Code.require_file( "indenter.exs", __DIR__ )
 
+ExUnit.start()
+
 defmodule IndenterTest do
 
   use ExUnit.Case
@@ -19,10 +21,9 @@ defmodule IndenterTest do
     tags = ~w(<parent> <child> </child> </parent>)
     assert indent( tags ) == """
     <parent>
-      <child>
-      </child>
+      <child></child>
     </parent>
-    """
+    """ |> String.strip
   end
 
   test "Increments the padding for nested tags" do
@@ -35,7 +36,7 @@ defmodule IndenterTest do
         </t3>
       </t2>
     </t1>
-    """
+    """ |> String.strip
   end
 
 end
