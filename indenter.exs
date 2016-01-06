@@ -6,9 +6,9 @@ defmodule Indenter do
     do_indent( tags, nil, "", 0 ) |> String.strip
   end
 
-  defp do_indent( [], prev_tag_type, acc, offset ), do: acc
+  defp do_indent( [], _prev_tag_type, acc, _offset ), do: acc
 
-  defp do_indent( [ tag ], prev_tag_type, acc, offset ) do
+  defp do_indent( [ tag ], _prev_tag_type, acc, offset ) do
     case tag_type( tag ) do
       :opening_tag ->
         acc <> ( List.duplicate( @tab_indent, offset ) |> Enum.join ) <> tag
@@ -22,7 +22,7 @@ defmodule Indenter do
   defp do_indent( [ tag, next | tail ], prev_tag_type, acc, offset ) do
     current_tag_type = tag_type( tag )
     next_tag_type    = tag_type( next )
-    res = case current_tag_type do
+    case current_tag_type do
       :opening_tag ->
         [
           acc,

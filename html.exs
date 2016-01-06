@@ -1,5 +1,7 @@
 defmodule Html do
 
+  import Indenter, only: [ indent: 1 ]
+
   @external_resource tags_path = Path.join([ __DIR__, "tags.txt" ])
   @tags ( for line <- File.stream!( tags_path, [], :line ) do
     line |> String.strip |> String.to_atom
@@ -52,23 +54,7 @@ defmodule Html do
     el
   end
 
-  def indent( [ el | tail ], acc, offset \\ 0 ) do
-    if @tab_indent_on do
-      [ el | buffer ]
-    else
-      indentation = List.duplicate( @tab_indent, offset ) |> String.join
-      case Regex.run( ~r/<\/?/, el ) |> List.first do
-        "</" ->
-          el <> "\n" <> indent( tail, offset - 1 )
-        "<"  ->
-          
-        _    -> # text
-      end
-    end
-  end
-
-
-  def render( buff ), do: Agent.get( buff, &(&1) ) |> _inspect |> Enum.reverse |> Enum.join("")
+  def render( buff ), do: Agent.get( buff, &(&1) ) |> _inspect |> Enum.reverse |> indent
 
   defmacro tag( name, attrs \\ [] ) do
     { inner, attrs } = Dict.pop( attrs, :do )
