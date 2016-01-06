@@ -22,7 +22,7 @@ defmodule Template do
         end
       end
       div do
-        text "Some text"
+        text "XSS Protection <script>alert('vulnerable?');</script>"
       end
     end
   end
