@@ -1,6 +1,7 @@
 defmodule Html do
 
   import Indenter, only: [ indent: 1 ]
+  import HtmlEntities, only: [ encode: 1 ]
 
   @external_resource tags_path = Path.join([ __DIR__, "tags.txt" ])
   @tags ( for line <- File.stream!( tags_path, [], :line ) do
@@ -75,7 +76,7 @@ defmodule Html do
   end
 
   defmacro text( string ) do
-    quote do: put_buffer( var!( buffer, Html ), to_string( unquote( string ) ) )
+    quote do: put_buffer( var!( buffer, Html ), encode( to_string( unquote( string ) ) ) )
   end
 
 end
